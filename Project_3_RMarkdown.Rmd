@@ -1,0 +1,129 @@
+---
+title: "Store Data Analysis"
+author: "Akis Gazepids"
+date: "15/1/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Wrangling
+
+Σκοπός της εργασίας είναι η διερεύνηση των δεδομένων λιανεμπορίου (Exploratory Data Analysis). Ειδικότερα θα πρέπει να διαχειριστείτε τα διαθέσιμα δεδομένα ώστε να παραχθούν γραφικές παραστάσεις συνοδευόμενες από σχολιασμό θα πρέπει να απαντούν στα ερωτήματα.
+
+Categories.csv: Τα προϊόντα (ean) είναι οργανωμένα σε προϊοντικές κατηγορίες 4 επιπέδων. Απεικονίζει μια δενδροειδή δομή οργάνωση των προϊόντων. Κάθε μια γραμμή είναι ένα προϊόν και τα δεδομένα που ακολουθούν είναι το μονοπάτι από μια γενική προϊοντική κατηγορία σε μια ειδίκευση. 
+
+Sales_464.csv (και Sales_493.csv): Περιέχει τις πωλήσεις που έχουν γίνει σε κάθε κατάστημα για διάστημα περίπου 12 μηνών. 
+
+### Insert Data
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library("data.table")
+options(knitr.duplicate.label = "allow")
+categories_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Categories.csv",row.names=NULL, encoding="UTF-8",sep=";", stringsAsFactors=FALSE,header = TRUE)
+sales_464_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Sales_464.csv",sep=";")
+sales_493_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Sales_493.csv",sep=";")
+
+```
+
+### Print the dimensions of the three dataframes
+```{r}
+print(dim(categories_df))
+print(dim(sales_464_df))
+print(dim(sales_493_df))
+```
+
+### Print top 10 rows of each dataframe
+```{r}
+print(head(categories_df , 5))
+print(head(sales_464_df , 5))
+print(head(sales_493_df , 5))
+```
+
+### Print the column names of each dataframe
+```{r}
+print(colnames(categories_df))
+print(colnames(sales_464_df))
+print(colnames(sales_493_df))
+```
+
+### Print the types of each dataframe
+```{r}
+print(sapply(categories_df, typeof))
+print(sapply(sales_464_df, typeof))
+print(sapply(sales_493_df, typeof))
+```
+
+### Group by ean and sum quantity and price
+```{r}
+agg_tbl <- sales_464_df %>% group_by(ean) %>% 
+  summarise(total_price=sum(price),
+            total_quantity = sum(quantity),.groups = 'drop')
+
+sales_464_grouped_df <- agg_tbl %>% as.data.frame()
+```
+
+### Sort by quantity in descending order and keep the top 20% of quantity sales
+```{r}
+sales_464_sortedbyQyantity_df = sales_464_grouped_df[order(-sales_464_grouped_df$total_quantity),]
+sales_464_20_perc = head(sales_464_sortedbyQyantity_df, round(dim(sales_464_sortedbyQyantity_df)[1] *0.2))
+```
+
+### Keep from the initial dataframe only the codes of the ean column after keeping only the top 20%
+```{r}
+list= sales_464_20_perc$ean
+filtered_sales_464_df = sales_464_df[sales_464_df$ean %in% list ,]
+```
+
+### Group by date and sum prices in the filtered dataframe and sort by date in ascending order
+```{r}
+agg_tbl <- filtered_sales_464_df %>% group_by(date_trns) %>% 
+  summarise(total_price=sum(price),.groups = 'drop')
+
+sales_464_grouped_df <- agg_tbl %>% as.data.frame()
+sales_464_sorted_df = sales_464_grouped_df[order(sales_464_grouped_df$date_trns),]
+```
+
+### Convert date_trns from character to date
+```{r}
+sales_464_sorted_df$date_trns <- as.Date(sales_464_sorted_df$date_trns, "%Y-%m-%d")
+```
+
+## Create and print scatterplot
+1.	Sample of 50 points in a scatterplot of the daily revenue of top 20% of the products in terms of quantity count.
+```{r scatterplot, echo=FALSE}
+ggplot(data = head(sales_464_sorted_df, 50), aes(date_trns, total_price)) +
+      geom_point() +
+      theme(axis.text.x = element_text(angle = 75, vjust = 0.5, hjust=1))+
+      ylim(0, 20000)
+```
+
+# Convert date_trns from character to date to inital dataframe
+```{r}
+sales_464_df$date_trns = as.Date(sales_464_df$date_trns, "%Y-%m-%d")
+```
+#Create a column for month and week number of the date 
+```{r}
+sales_464_df$month =format(sales_464_df$date_trns, "%b")
+sales_464_df$weekNum =format(sales_464_df$date_trns, "%V")
+```
+
+# Group by month in the dataframe and sum prices and quantity
+```{r}
+agg_tbl <- sales_464_df %>% group_by(month) %>% 
+  summarise(total_price=sum(price),
+            total_quantity = sum(quantity),.groups = 'drop')
+
+sales_464_grouped_month_df <- agg_tbl %>% as.data.frame()
+```
+# Create and print barplot
+1.	Monthly revenue of store 464 in a barplot.
+```{r barplot, echo=FALSE, fig.keep='all'}
+ggplot(sales_464_grouped_month_df, aes(x=month, y=total_price)) + 
+  geom_bar(stat = "summary", fun = "median")+
+  scale_y_continuous(name="Monthly revenue of store", labels = scales::comma)
+```
