@@ -2,9 +2,9 @@ library(ggplot2)
 library(dplyr)
 library("data.table")  
 
-categories_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Categories.csv",row.names=NULL, encoding="UTF-8",sep=";", stringsAsFactors=FALSE,header = TRUE)
-sales_464_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Sales_464.csv",sep=";")
-sales_493_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Aggeliki_Papadopoulou\\Data\\Sales_493.csv",sep=";")
+categories_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Data\\Categories.csv",row.names=NULL, encoding="UTF-8",sep=";", stringsAsFactors=FALSE,header = TRUE)
+sales_464_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Data\\Sales_464.csv",sep=";")
+sales_493_df = read.csv("C:\\Users\\Intel PC G5900\\Desktop\\Data\\Sales_493.csv",sep=";")
 
 # Print the dimensions of the three dataframes
 
